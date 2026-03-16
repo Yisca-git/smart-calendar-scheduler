@@ -1,14 +1,19 @@
 """Calendar data repository"""
 
 import csv
+import logging
 from pathlib import Path
 from typing import List, Dict
 from ..models.event import Event
 from ..models.time_slot import TimeSlot
 from ..utils.time_utils import TimeUtils
+from ..utils.exceptions import CalendarFileNotFoundError, InvalidCalendarFormatError
+from .calendar_repository_base import CalendarRepositoryBase
+
+logger = logging.getLogger(__name__)
 
 
-class CalendarRepository:
+class CalendarRepository(CalendarRepositoryBase):
     """
     Repository for loading calendar data from CSV.
     
@@ -41,7 +46,7 @@ class CalendarRepository:
             return self._all_events
         
         if not self.csv_path.exists():
-            raise FileNotFoundError(f"Calendar file not found: {self.csv_path}")
+            raise CalendarFileNotFoundError(f"Calendar file not found: {self.csv_path}")
         
         events = []
         
@@ -49,7 +54,7 @@ class CalendarRepository:
             reader = csv.reader(file)
             for line_num, row in enumerate(reader, 1):
                 if len(row) != 4:
-                    raise ValueError(
+                    raise InvalidCalendarFormatError(
                         f"Invalid CSV format at line {line_num}: expected 4 columns, got {len(row)}"
                     )
                 
@@ -61,10 +66,11 @@ class CalendarRepository:
                     time_slot = TimeSlot(start_time, end_time)
                     event = Event(person.strip(), subject.strip(), time_slot)
                     events.append(event)
-                except ValueError as e:
-                    raise ValueError(f"Invalid data at line {line_num}: {e}") from e
+                except (InvalidCalendarFormatError, Exception) as e:
+                    raise InvalidCalendarFormatError(f"Invalid data at line {line_num}: {e}") from e
         
         self._all_events = events
+        logger.info("Loaded %d events from %s", len(events), self.csv_path)
         return events
     
     def get_events_by_person(self, person: str) -> List[Event]:

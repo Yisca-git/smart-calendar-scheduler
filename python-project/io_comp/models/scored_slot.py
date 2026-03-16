@@ -2,10 +2,10 @@
 
 from dataclasses import dataclass
 from datetime import time
-from typing import List
+from typing import Tuple
 
 
-@dataclass
+@dataclass(frozen=True)
 class ScoredSlot:
     """
     A time slot with a quality score and reasoning.
@@ -15,7 +15,7 @@ class ScoredSlot:
     start_time: time
     end_time: time
     score: float  # 0-100
-    reasons: List[str]
+    reasons: Tuple[str, ...]
     
     def get_rating(self) -> str:
         """Get textual rating based on score"""

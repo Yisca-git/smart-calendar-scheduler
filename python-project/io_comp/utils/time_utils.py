@@ -1,6 +1,7 @@
 """Time utility functions"""
 
 from datetime import time, datetime, date, timedelta
+from ..utils.exceptions import InvalidTimeFormatError
 
 
 class TimeUtils:
@@ -25,7 +26,7 @@ class TimeUtils:
             hour, minute = map(int, time_str.split(':'))
             return time(hour, minute)
         except (ValueError, AttributeError) as e:
-            raise ValueError(f"Invalid time format: {time_str}. Expected HH:MM") from e
+            raise InvalidTimeFormatError(f"Invalid time format: {time_str}. Expected HH:MM") from e
     
     @staticmethod
     def add_duration(start: time, duration: timedelta) -> time:

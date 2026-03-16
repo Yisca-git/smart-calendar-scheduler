@@ -4,7 +4,7 @@ from typing import List
 from datetime import timedelta
 from ..models.meeting_preferences import MeetingPreferences
 from ..models.scored_slot import ScoredSlot
-from ..repositories.calendar_repository import CalendarRepository
+from ..repositories.calendar_repository_base import CalendarRepositoryBase
 from .availability_service import AvailabilityService
 from .scoring.composite_scorer import CompositeScorer
 from .scoring.time_of_day_scorer import TimeOfDayScorer
@@ -21,7 +21,7 @@ class RecommendationService:
     Combines availability finding with intelligent scoring.
     """
     
-    def __init__(self, repository: CalendarRepository):
+    def __init__(self, repository: CalendarRepositoryBase):
         """
         Initialize service with a calendar repository.
         

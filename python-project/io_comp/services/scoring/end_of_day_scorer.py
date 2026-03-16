@@ -5,6 +5,7 @@ from typing import Tuple
 from .base_scorer import BaseScorer
 from ...models.time_slot import TimeSlot
 from ...models.meeting_preferences import MeetingPreferences
+from ...utils.work_day_config import WorkDayConfig
 
 
 class EndOfDayScorer(BaseScorer):
@@ -38,9 +39,9 @@ class EndOfDayScorer(BaseScorer):
         # Calculate when meeting would end
         meeting_end = self._add_duration(slot.start_time, duration)
         
-        if meeting_end <= time(17, 0):
+        if meeting_end <= WorkDayConfig.END_OF_DAY_BUFFER:
             return 1.0, "+ Ends with time to spare"
-        elif meeting_end <= time(18, 0):
+        elif meeting_end <= WorkDayConfig.END_OF_DAY_LATE:
             return 0.67, "~ Ends close to work day end"
         else:
             return 0.33, "~ Ends very late"

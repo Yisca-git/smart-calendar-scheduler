@@ -5,6 +5,7 @@ This application finds the best meeting times for a group of people
 based on their calendar availability and intelligent scoring.
 """
 
+import logging
 from pathlib import Path
 from datetime import timedelta
 from typing import List
@@ -12,6 +13,9 @@ from typing import List
 from .repositories.calendar_repository import CalendarRepository
 from .services.recommendation_service import RecommendationService
 from .utils.formatters import ResultFormatter
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logger = logging.getLogger(__name__)
 
 
 def find_available_slots(person_list: List[str], event_duration: timedelta) -> List:
@@ -37,32 +41,21 @@ def find_available_slots(person_list: List[str], event_duration: timedelta) -> L
 def main():
     """Main entry point demonstrating the calendar system"""
     
-    print("\n" + "="*60)
-    print("Smart Calendar Meeting Scheduler")
-    print("="*60 + "\n")
-    
-    # Setup
+    logger.info("Smart Calendar Meeting Scheduler started")
+
     csv_path = Path(__file__).parent.parent / "resources" / "calendar.csv"
     repository = CalendarRepository(csv_path)
     service = RecommendationService(repository)
     formatter = ResultFormatter()
-    
-    # Example from README: Alice & Jack, 60 minutes
-    print("Example: Finding meeting time for Alice & Jack (60 minutes)\n")
-    
+
     person_list = ["Alice", "Jack"]
     duration = timedelta(minutes=60)
-    
-    # Find best slots with scoring
+    logger.info("Finding meeting time for %s (%d minutes)", person_list, int(duration.total_seconds() / 60))
+
     results = service.find_best_slots(person_list, duration, top_n=3)
-    
-    # Display results
-    output = formatter.format_scored_slots(results)
-    print(output)
-    
-    print("\n" + "="*60)
-    print("Calendar system ready!")
-    print("="*60 + "\n")
+    logger.info("Found %d available slots", len(results))
+
+    print(formatter.format_scored_slots(results))
 
 
 if __name__ == "__main__":

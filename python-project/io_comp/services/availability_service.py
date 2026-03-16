@@ -3,7 +3,8 @@
 from typing import List
 from datetime import time, timedelta
 from ..models.time_slot import TimeSlot
-from ..repositories.calendar_repository import CalendarRepository
+from ..repositories.calendar_repository_base import CalendarRepositoryBase
+from ..utils.work_day_config import WorkDayConfig
 
 
 class AvailabilityService:
@@ -13,10 +14,10 @@ class AvailabilityService:
     Implements the core algorithm for finding gaps in schedules.
     """
     
-    WORK_DAY_START = time(7, 0)
-    WORK_DAY_END = time(19, 0)
+    WORK_DAY_START = WorkDayConfig.START
+    WORK_DAY_END = WorkDayConfig.END
     
-    def __init__(self, repository: CalendarRepository):
+    def __init__(self, repository: CalendarRepositoryBase):
         """
         Initialize service with a calendar repository.
         

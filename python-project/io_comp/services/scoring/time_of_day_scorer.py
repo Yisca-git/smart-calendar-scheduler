@@ -5,6 +5,7 @@ from typing import Tuple
 from .base_scorer import BaseScorer
 from ...models.time_slot import TimeSlot
 from ...models.meeting_preferences import MeetingPreferences
+from ...utils.work_day_config import WorkDayConfig
 
 
 class TimeOfDayScorer(BaseScorer):
@@ -39,13 +40,13 @@ class TimeOfDayScorer(BaseScorer):
         """
         hour = slot.start_time.hour
         
-        if 7 <= hour < 9:
+        if WorkDayConfig.START.hour <= hour < WorkDayConfig.EARLY_MORNING_END.hour:
             return 1.0, "+ Early morning - high energy"
-        elif 9 <= hour < 12:
+        elif WorkDayConfig.EARLY_MORNING_END.hour <= hour < WorkDayConfig.MORNING_END.hour:
             return 0.8, "+ Morning - productive time"
-        elif 12 <= hour < 14:
+        elif WorkDayConfig.MORNING_END.hour <= hour < WorkDayConfig.LUNCH_END.hour:
             return 0.4, "~ Around lunch time"
-        elif 14 <= hour < 16:
+        elif WorkDayConfig.LUNCH_END.hour <= hour < WorkDayConfig.EARLY_AFTERNOON_END.hour:
             return 0.6, "+ Early afternoon"
-        else:  # 16-19
+        else:
             return 0.2, "~ Late afternoon - low energy"

@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from datetime import time, datetime, date, timedelta
 from typing import Optional
+from ..utils.exceptions import InvalidTimeSlotError
 
 
 @dataclass(frozen=True)
@@ -18,7 +19,7 @@ class TimeSlot:
     def __post_init__(self):
         """Validate that start time is before end time"""
         if self.start_time >= self.end_time:
-            raise ValueError(
+            raise InvalidTimeSlotError(
                 f"Start time {self.start_time} must be before end time {self.end_time}"
             )
     
@@ -44,7 +45,7 @@ class TimeSlot:
             ValueError: If slots don't overlap or aren't adjacent
         """
         if not (self.overlaps(other) or self.is_adjacent(other)):
-            raise ValueError("Cannot merge non-overlapping and non-adjacent slots")
+            raise InvalidTimeSlotError("Cannot merge non-overlapping and non-adjacent slots")
         
         return TimeSlot(
             min(self.start_time, other.start_time),

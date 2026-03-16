@@ -4,31 +4,61 @@ Unit tests for Comp calendar scheduler
 
 import pytest
 from datetime import time, timedelta
-from pathlib import Path
+from typing import List
 
 from io_comp.models.time_slot import TimeSlot
 from io_comp.models.event import Event
-from io_comp.repositories.calendar_repository import CalendarRepository
+from io_comp.repositories.calendar_repository_base import CalendarRepositoryBase
 from io_comp.services.availability_service import AvailabilityService
 from io_comp.services.recommendation_service import RecommendationService
 
 
+ALICE_EVENTS = [
+    Event("Alice", "Morning meeting", TimeSlot(time(8, 0), time(9, 30))),
+    Event("Alice", "Lunch with Jack", TimeSlot(time(13, 0), time(14, 0))),
+    Event("Alice", "Yoga", TimeSlot(time(16, 0), time(17, 0))),
+]
+
+JACK_EVENTS = [
+    Event("Jack", "Morning meeting", TimeSlot(time(8, 0), time(8, 50))),
+    Event("Jack", "Sales call", TimeSlot(time(9, 0), time(9, 40))),
+    Event("Jack", "Lunch with Alice", TimeSlot(time(13, 0), time(14, 0))),
+    Event("Jack", "Yoga", TimeSlot(time(16, 0), time(17, 0))),
+]
+
+BOB_EVENTS = [
+    Event("Bob", "Morning meeting", TimeSlot(time(8, 0), time(9, 30))),
+    Event("Bob", "Morning meeting 2", TimeSlot(time(9, 30), time(9, 40))),
+    Event("Bob", "Q3 review", TimeSlot(time(10, 0), time(11, 30))),
+    Event("Bob", "Lunch and siesta", TimeSlot(time(13, 0), time(15, 0))),
+    Event("Bob", "Yoga", TimeSlot(time(16, 0), time(17, 0))),
+]
+
+ALL_EVENTS = ALICE_EVENTS + JACK_EVENTS + BOB_EVENTS
+
+
+class FakeCalendarRepository(CalendarRepositoryBase):
+    """In-memory repository for testing"""
+
+    def __init__(self, events: List[Event]):
+        self._events = events
+
+    def get_events_for_persons(self, persons: List[str]) -> List[Event]:
+        return [e for e in self._events if e.person in persons]
+
+
 @pytest.fixture
 def repository():
-    """Create repository with test data"""
-    csv_path = Path(__file__).parent.parent / "resources" / "calendar.csv"
-    return CalendarRepository(csv_path)
+    return FakeCalendarRepository(ALL_EVENTS)
 
 
 @pytest.fixture
 def availability_service(repository):
-    """Create availability service"""
     return AvailabilityService(repository)
 
 
 @pytest.fixture
 def recommendation_service(repository):
-    """Create recommendation service"""
     return RecommendationService(repository)
 
 
@@ -43,7 +73,8 @@ class TestTimeSlot:
     
     def test_invalid_time_slot(self):
         """Test that invalid time slot raises error"""
-        with pytest.raises(ValueError):
+        from io_comp.utils.exceptions import InvalidTimeSlotError
+        with pytest.raises(InvalidTimeSlotError):
             TimeSlot(time(10, 0), time(9, 0))
     
     def test_duration_calculation(self):
@@ -160,22 +191,19 @@ class TestRecommendationService:
 
 class TestIntegration:
     """Integration tests"""
-    
+
     def test_full_workflow(self, repository):
-        """Test complete workflow from CSV to recommendations"""
-        # Load data
-        events = repository.load_events()
+        """Test complete workflow from events to recommendations"""
+        events = repository.get_events_for_persons(["Alice", "Jack"])
         assert len(events) > 0
-        
-        # Find availability
+
         availability_service = AvailabilityService(repository)
         slots = availability_service.find_available_slots(
             ["Alice", "Jack"],
             timedelta(minutes=60)
         )
         assert len(slots) > 0
-        
-        # Get recommendations
+
         recommendation_service = RecommendationService(repository)
         results = recommendation_service.find_best_slots(
             ["Alice", "Jack"],
